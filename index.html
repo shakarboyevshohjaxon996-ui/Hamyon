@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#090d16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hamyon AI">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Hamyon AI — Aqlli Qarz va Xarajatlar Nazoratchisi</title>
+    <!-- Telegram WebApp SDK (Telegram Mini App sifatida ishlashi uchun) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        obsidian: '#090d16',
+                        cardbg: 'rgba(17, 24, 39, 0.65)',
+                        neonCyan: '#06b6d4',
+                        neonEmerald: '#10b981',
+                        neonRose: '#f43f5e',
+                        neonAmber: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f8fafc;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(6, 182, 212, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 25%, rgba(16, 185, 129, 0.10) 0%, transparent 45%),
+                radial-gradient(circle at 50% 90%, rgba(244, 63, 94, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-card {
+            background: rgba(17, 24, 39, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+
+        .glass-input {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.12);
+            transition: all 0.25s ease;
+        }
+
+        .glass-input:focus-within {
+            border-color: #06b6d4;
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.28);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.25);
+            border-radius: 9999px;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(244, 63, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
+        .mic-recording {
+            animation: pulse-ring 1.5s infinite;
+            background-color: #f43f5e !important;
+            color: white !important;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-item {
+            animation: slideUp 0.28s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-24 selection:bg-cyan-500/30 selection:text-cyan-200">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-11/12 max-w-md pointer-events-none"></div>
+
+    <!-- Main App Container -->
+    <div class="max-w-lg mx-auto px-4 pt-5">
+
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <i class="ph-bold ph-wallet text-slate-950 text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-1.5">
+                        Hamyon <span class="text-xs font-bold px-1.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">AI</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Aqlli moliya va qarz nazorati</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="install-app-btn" onclick="triggerInstallApp()" title="Ilovani telefonga o'rnatish" class="px-2.5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center gap-1 transition active:scale-95">
+                    <i class="ph-bold ph-device-mobile-camera text-base"></i>
+                    <span>O'rnatish</span>
+                </button>
+                <button onclick="copySummaryReport()" title="Hisobotni nusxalash" class="p-2.5 rounded-xl glass-card hover:bg-slate-800/80 text-slate-300 hover:text-cyan-400 transition active:scale-95">
+                    <i class="ph ph-share-network text-lg"></i>
+                </button>
+                <button onclick="toggleSettingsModal()" title="Sozlamalar va Limit" class="p-2.5 rounded-xl glass-card hover:bg-slate-800/80 text-slate-300 hover:text-cyan-400 transition active:scale-95">
+                    <i class="ph ph-sliders-horizontal text-lg"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Balance Card -->
+        <section class="glass-card rounded-3xl p-5 mb-4 relative overflow-hidden">
+            <div class="absolute -right-8 -top-8 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div class="flex justify-between items-start mb-1">
+                <span class="text-xs font-medium uppercase tracking-wider text-slate-400">Umumiy Balans</span>
+                <span id="current-month-badge" class="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-800/90 text-slate-300 border border-slate-700/60"></span>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 mb-5">
+                <div class="flex items-baseline gap-2 min-w-0">
+                    <h2 id="total-balance" class="text-3xl sm:text-4xl font-extrabold font-mono tracking-tight text-white truncate">0</h2>
+                    <span class="text-sm font-semibold text-slate-400 shrink-0">so'm</span>
+                </div>
+
+                <!-- Prominent + Pul qo'shish (Add Income) Button -->
+                <button onclick="openIncomeModal()" class="px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-xs sm:text-sm flex items-center gap-1.5 shrink-0 shadow-lg shadow-emerald-500/25 transition active:scale-95">
+                    <i class="ph-bold ph-plus-circle text-base sm:text-lg"></i>
+                    <span>Pul qo'shish</span>
+                </button>
+            </div>
+
+            <!-- Income & Expense Mini Grid -->
+            <div class="grid grid-cols-2 gap-3">
+                <div onclick="openIncomeModal()" class="cursor-pointer rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/25 p-3 flex items-center gap-3 transition active:scale-[0.98]">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                        <i class="ph-bold ph-arrow-down-left text-lg"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[11px] text-slate-400">Jami daromad</p>
+                        <p id="total-income" class="text-sm font-bold font-mono text-emerald-400 truncate">+0</p>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl bg-rose-500/10 border border-rose-500/20 p-3 flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
+                        <i class="ph-bold ph-arrow-up-right text-lg"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[11px] text-slate-400">Jami xarajat</p>
+                        <p id="total-expense" class="text-sm font-bold font-mono text-rose-400 truncate">-0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Debt Summary Cards (Receivable & Payable) -->
+        <section class="grid grid-cols-2 gap-3 mb-5">
+            <div onclick="switchTab('debts')" class="glass-card rounded-2xl p-3.5 cursor-pointer hover:border-cyan-500/40 transition active:scale-[0.98]">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[11px] font-medium text-slate-400">Menga qaytadi</span>
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+                </div>
+                <p id="debt-receivable" class="text-base font-bold font-mono text-cyan-300 truncate">0 so'm</p>
+                <p id="debt-receivable-count" class="text-[11px] text-slate-500 mt-0.5">0 ta faol qarz</p>
+            </div>
+
+            <div onclick="switchTab('debts')" class="glass-card rounded-2xl p-3.5 cursor-pointer hover:border-amber-500/40 transition active:scale-[0.98]">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[11px] font-medium text-slate-400">Men berishim kerak</span>
+                    <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]"></span>
+                </div>
+                <p id="debt-payable" class="text-base font-bold font-mono text-amber-300 truncate">0 so'm</p>
+                <p id="debt-payable-count" class="text-[11px] text-slate-500 mt-0.5">0 ta faol qarz</p>
+            </div>
+        </section>
+
+        <!-- Smart AI Quick Input Section -->
+        <section class="mb-6">
+            <div class="flex items-center justify-between mb-2 px-1">
+                <label for="smart-input" class="text-xs font-semibold text-cyan-400 flex items-center gap-1.5">
+                    <i class="ph-fill ph-sparkle"></i> Aqlli kiritish (Matn yoki Ovoz)
+                </label>
+                <button onclick="toggleManualModal()" class="text-xs text-slate-400 hover:text-white underline underline-offset-2">
+                    + Qo'lda kiritish
+                </button>
+            </div>
+
+            <form id="smart-form" class="glass-input rounded-2xl p-1.5 flex items-center gap-1.5">
+                <button type="button" id="voice-btn" onclick="startVoiceRecognition()" title="Ovozli kiritish" class="w-11 h-11 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-cyan-400 flex items-center justify-center shrink-0 transition">
+                    <i class="ph-bold ph-microphone text-xl"></i>
+                </button>
+
+                <button type="button" onclick="document.getElementById('smart-image-input').click()" title="Rasm biriktirish" class="w-11 h-11 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-emerald-400 flex items-center justify-center shrink-0 transition">
+                    <i class="ph-bold ph-image text-xl"></i>
+                </button>
+                
+                <input 
+                    type="text" 
+                    id="smart-input" 
+                    autocomplete="off"
+                    placeholder="Masalan: Tushlik 45 ming yoki Anvarga 100k qarz berdim" 
+                    class="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none px-2"
+                >
+
+                <button type="submit" class="h-11 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold text-sm flex items-center gap-1.5 shrink-0 shadow-lg shadow-cyan-500/20 transition active:scale-95">
+                    <span>Qo'shish</span>
+                    <i class="ph-bold ph-paper-plane-right"></i>
+                </button>
+            </form>
+
+            <!-- Live NLP Preview Badge -->
+            <div id="nlp-preview" class="hidden mt-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-cyan-500/30 text-xs flex items-center justify-between text-slate-300">
+                <span id="nlp-preview-text"></span>
+                <span id="nlp-preview-badge" class="font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300"></span>
+            </div>
+
+            <!-- Attached Image Preview for Smart Input -->
+            <div id="smart-image-preview" class="hidden mt-2 p-2 rounded-2xl bg-slate-900/90 border border-cyan-500/30 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <img id="smart-image-thumb" src="" alt="Biriktirilgan rasm" class="w-11 h-11 rounded-xl object-cover border border-slate-700 shrink-0">
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold text-cyan-300 truncate">Rasm biriktirildi</p>
+                        <p id="smart-image-name" class="text-[11px] text-slate-400 truncate"></p>
+                    </div>
+                </div>
+                <button type="button" onclick="clearSmartImage()" title="Rasmni olib tashlash" class="p-1.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition shrink-0">
+                    <i class="ph-bold ph-x text-base"></i>
+                </button>
+            </div>
+            <input type="file" id="smart-image-input" accept="image/*" class="hidden" onchange="handleSmartImageSelect(event)">
+
+            <!-- 1-Tap Quick Sample Chips -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pt-2.5 pb-1 no-scrollbar">
+                <span class="text-[11px] text-slate-500 shrink-0 mr-1">Namuna:</span>
+                <button type="button" onclick="applySample('Oyligim tushdi 5 mln')" class="shrink-0 text-[11px] px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition">
+                    💰 Oyligim tushdi 5 mln
+                </button>
+                <button type="button" onclick="applySample('Tushlik 45 ming')" class="shrink-0 text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition">
+                    🍔 Tushlik 45 ming
+                </button>
+                <button type="button" onclick="applySample('Anvarga 100k qarz berdim')" class="shrink-0 text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-cyan-300 border border-cyan-500/20 transition">
+                    🤝 Anvarga 100k qarz berdim
+                </button>
+                <button type="button" onclick="applySample('Taksi 18000')" class="shrink-0 text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/60 transition">
+                    🚕 Taksi 18000
+                </button>
+                <button type="button" onclick="applySample('Sardordan 50 ming qarz oldim')" class="shrink-0 text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-amber-300 border border-amber-500/20 transition">
+                    📥 Sardordan 50 ming qarz oldim
+                </button>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="glass-card rounded-2xl p-1 grid grid-cols-3 gap-1 mb-5">
+            <button onclick="switchTab('transactions')" id="tab-btn-transactions" class="tab-btn py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-slate-800 text-cyan-400 shadow">
+                <i class="ph-bold ph-list-bullets text-base"></i>
+                <span>Amaliyotlar</span>
+            </button>
+            <button onclick="switchTab('debts')" id="tab-btn-debts" class="tab-btn py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 relative">
+                <i class="ph-bold ph-handshake text-base"></i>
+                <span>Qarzlar</span>
+                <span id="debts-badge" class="hidden ml-0.5 px-1.5 py-0.2 text-[10px] font-mono rounded-full bg-cyan-500 text-slate-950 font-bold">0</span>
+            </button>
+            <button onclick="switchTab('analytics')" id="tab-btn-analytics" class="tab-btn py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5">
+                <i class="ph-bold ph-chart-pie-slice text-base"></i>
+                <span>Tahlil</span>
+            </button>
+        </nav>
+
+        <!-- TAB 1: TRANSACTIONS (ASOSIY) -->
+        <main id="view-transactions" class="tab-view">
+            <!-- Filter Pills -->
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-1.5">
+                    <button onclick="setTxFilter('all')" id="filter-all" class="tx-filter px-3 py-1 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Barchasi</button>
+                    <button onclick="setTxFilter('expense')" id="filter-expense" class="tx-filter px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white">Xarajatlar</button>
+                    <button onclick="setTxFilter('income')" id="filter-income" class="tx-filter px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white">Daromadlar</button>
+                </div>
+                <span id="tx-count-label" class="text-[11px] text-slate-500">0 ta yozuv</span>
+            </div>
+
+            <!-- Transactions List -->
+            <div id="transactions-list" class="space-y-2.5">
+                <!-- Rendered via JS -->
+            </div>
+        </main>
+
+        <!-- TAB 2: DEBTS BOOK (QARZLAR DAFTARCHASI) -->
+        <section id="view-debts" class="tab-view hidden">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-bold text-slate-200">Faol va yopilgan qarzlar</h3>
+                <button onclick="openManualDebtModal()" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/30 transition">
+                    + Yangi qarz
+                </button>
+            </div>
+
+            <div id="debts-list" class="space-y-3">
+                <!-- Rendered via JS -->
+            </div>
+        </section>
+
+        <!-- TAB 3: ANALYTICS (TAHLIL VA LIMIT) -->
+        <section id="view-analytics" class="tab-view hidden space-y-4">
+            <!-- Monthly Budget Limit Card -->
+            <div class="glass-card rounded-3xl p-5">
+                <div class="flex items-center justify-between mb-2">
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Oylik xarajat limiti</h3>
+                        <p class="text-xs text-slate-400">Byudjet nazorati indikatori</p>
+                    </div>
+                    <button onclick="toggleSettingsModal()" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-cyan-400 hover:bg-slate-700 transition">
+                        O'zgartirish
+                    </button>
+                </div>
+
+                <div class="flex justify-between text-xs font-mono mt-3 mb-1.5">
+                    <span id="limit-spent-text" class="text-slate-300">0 so'm sarflandi</span>
+                    <span id="limit-total-text" class="text-slate-400">Limit: 3 000 000</span>
+                </div>
+
+                <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5">
+                    <div id="limit-progress-bar" class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="limit-warning-msg" class="text-[11px] text-emerald-400 mt-2 flex items-center gap-1">
+                    <i class="ph-fill ph-check-circle"></i> Xarajatlar me'yorida ketmoqda.
+                </p>
+            </div>
+
+            <!-- Category Breakdown Card -->
+            <div class="glass-card rounded-3xl p-5">
+                <h3 class="text-sm font-bold text-white mb-4">Xarajatlar tarkibi (Kategoriyalar)</h3>
+                
+                <div class="flex flex-col sm:flex-row items-center gap-6">
+                    <!-- SVG Donut Chart -->
+                    <div class="relative w-40 h-40 shrink-0 flex items-center justify-center">
+                        <svg id="donut-chart" viewBox="0 0 100 100" class="w-full h-full -rotate-90 transform"></svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                            <span class="text-[10px] uppercase text-slate-400">Jami chiqim</span>
+                            <span id="donut-total" class="text-xs font-bold font-mono text-white mt-0.5">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Category Progress Bars -->
+                    <div id="category-bars" class="w-full space-y-3">
+                        <!-- Rendered via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- MANUAL ENTRY MODAL -->
+    <div id="manual-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-5 border border-slate-700/80 animate-item">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-white">Yangi yozuv qo'shish</h3>
+                <button onclick="toggleManualModal()" class="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+
+            <form id="manual-form" class="space-y-3.5">
+                <!-- Type Selector -->
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="m-type" value="expense" checked class="peer hidden" onchange="updateManualFormFields()">
+                        <div class="py-2 text-center rounded-xl text-xs font-bold border border-slate-700 bg-slate-900/60 text-slate-400 peer-checked:bg-rose-500/20 peer-checked:border-rose-500 peer-checked:text-rose-300 transition">
+                            💸 Xarajat
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="m-type" value="income" class="peer hidden" onchange="updateManualFormFields()">
+                        <div class="py-2 text-center rounded-xl text-xs font-bold border border-slate-700 bg-slate-900/60 text-slate-400 peer-checked:bg-emerald-500/20 peer-checked:border-emerald-500 peer-checked:text-emerald-300 transition">
+                            💰 Daromad
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="m-type" value="debt_given" class="peer hidden" onchange="updateManualFormFields()">
+                        <div class="py-2 text-center rounded-xl text-xs font-bold border border-slate-700 bg-slate-900/60 text-slate-400 peer-checked:bg-cyan-500/20 peer-checked:border-cyan-500 peer-checked:text-cyan-300 transition">
+                            🤝 Qarz berdim
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="m-type" value="debt_taken" class="peer hidden" onchange="updateManualFormFields()">
+                        <div class="py-2 text-center rounded-xl text-xs font-bold border border-slate-700 bg-slate-900/60 text-slate-400 peer-checked:bg-amber-500/20 peer-checked:border-amber-500 peer-checked:text-amber-300 transition">
+                            📥 Qarz oldim
+                        </div>
+                    </label>
+                </div>
+
+                <div>
+                    <label id="m-title-label" class="block text-xs text-slate-400 mb-1">Nima uchun? (Izoh)</label>
+                    <input type="text" id="m-title" required placeholder="Masalan: Kechki ovqat" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:border-cyan-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Summa (so'm)</label>
+                    <input type="number" id="m-amount" required min="100" step="any" placeholder="50000" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm font-mono text-white focus:border-cyan-500 focus:outline-none">
+                </div>
+
+                <div id="m-category-wrapper">
+                    <label class="block text-xs text-slate-400 mb-1">Kategoriya</label>
+                    <select id="m-category" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:border-cyan-500 focus:outline-none">
+                        <option value="Oziq-ovqat">🍔 Oziq-ovqat</option>
+                        <option value="Transport">🚕 Transport</option>
+                        <option value="Xaridlar">🛍️ Xaridlar</option>
+                        <option value="Kommunal">💡 Kommunal va Aloqa</option>
+                        <option value="Salomatlik">💊 Salomatlik</option>
+                        <option value="Boshqa">📦 Boshqa</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Rasm biriktirish (Chek yoki eslatma — ixtiyoriy)</label>
+                    <div class="flex items-center gap-2.5">
+                        <label class="flex-1 cursor-pointer px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-dashed border-slate-700 hover:border-cyan-500/50 text-xs text-slate-300 flex items-center justify-center gap-2 transition">
+                            <i class="ph-bold ph-camera text-cyan-400 text-base"></i>
+                            <span id="m-image-label">Rasm tanlash</span>
+                            <input type="file" id="m-image-input" accept="image/*" class="hidden" onchange="handleManualImageSelect(event)">
+                        </label>
+                        <div id="m-image-preview-box" class="hidden items-center gap-1.5">
+                            <img id="m-image-thumb" src="" alt="Tanlangan rasm" class="w-10 h-10 rounded-xl object-cover border border-slate-700">
+                            <button type="button" onclick="clearManualImage()" class="p-1.5 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500/25">
+                                <i class="ph-bold ph-trash text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-cyan-500/20 hover:opacity-95 transition">
+                    Saqlash
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- IMAGE VIEWER LIGHTBOX MODAL -->
+    <div id="image-viewer-modal" onclick="closeImageViewer()" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/90 backdrop-blur-md p-4">
+        <div onclick="event.stopPropagation()" class="glass-card w-full max-w-md rounded-3xl p-4 border border-slate-700/80 animate-item">
+            <div class="flex items-center justify-between mb-3">
+                <div class="min-w-0 pr-2">
+                    <h4 id="viewer-title" class="text-sm font-bold text-white truncate">Biriktirilgan rasm</h4>
+                    <p id="viewer-subtitle" class="text-[11px] text-slate-400 truncate"></p>
+                </div>
+                <button onclick="closeImageViewer()" class="p-1.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white shrink-0">
+                    <i class="ph-bold ph-x text-base"></i>
+                </button>
+            </div>
+            <div class="rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center max-h-[65vh]">
+                <img id="viewer-img" src="" alt="Katta rasm" class="max-w-full max-h-[65vh] object-contain">
+            </div>
+        </div>
+    </div>
+
+    <!-- QUICK ADD INCOME (+ PUL QO'SHISH) MODAL -->
+    <div id="income-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-5 border border-emerald-500/30 animate-item">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                        <i class="ph-bold ph-coins text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Pul qo'shish (Daromad)</h3>
+                        <p class="text-[11px] text-slate-400">Oylik, avans yoki tushgan pulni kiriting</p>
+                    </div>
+                </div>
+                <button onclick="toggleIncomeModal()" class="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+
+            <!-- Quick Preset Chips -->
+            <div class="mb-3.5">
+                <span class="block text-[11px] text-slate-400 mb-1.5">Tezkor tanlash:</span>
+                <div class="flex flex-wrap gap-1.5">
+                    <button type="button" onclick="selectIncomePreset('Oylik maosh')" class="income-preset px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition">
+                        💼 Oylik maosh
+                    </button>
+                    <button type="button" onclick="selectIncomePreset('Avans')" class="income-preset px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800/90 text-slate-300 border border-slate-700 hover:border-emerald-500/40 transition">
+                        💵 Avans
+                    </button>
+                    <button type="button" onclick="selectIncomePreset('Qo‘shimcha daromad')" class="income-preset px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800/90 text-slate-300 border border-slate-700 hover:border-emerald-500/40 transition">
+                        🚀 Qo'shimcha daromad
+                    </button>
+                    <button type="button" onclick="selectIncomePreset('Sovg‘a / Bonus')" class="income-preset px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800/90 text-slate-300 border border-slate-700 hover:border-emerald-500/40 transition">
+                        🎁 Sovg'a / Bonus
+                    </button>
+                </div>
+            </div>
+
+            <form id="income-form" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Daromad nomi (Manba)</label>
+                    <input type="text" id="inc-title" required value="Oylik maosh" placeholder="Masalan: Oylik maosh" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Summa (masalan: 4500000, 4.5 mln yoki 500k)</label>
+                    <input type="text" id="inc-amount" required inputmode="decimal" placeholder="Masalan: 5 mln yoki 5000000" class="w-full px-3.5 py-3 rounded-xl bg-slate-900 border border-emerald-500/40 text-base font-bold font-mono text-emerald-300 placeholder-slate-600 focus:border-emerald-400 focus:outline-none">
+                </div>
+
+                <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-1.5 transition active:scale-95">
+                    <i class="ph-bold ph-plus-circle text-lg"></i>
+                    <span>Qo'shish</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SETTINGS & DEMO DATA MODAL -->
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-5 border border-slate-700/80 animate-item">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-white">Sozlamalar va Ma'lumotlar</h3>
+                <button onclick="toggleSettingsModal()" class="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Oylik xarajat limiti (so'm)</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="setting-budget-input" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm font-mono text-white focus:border-cyan-500 focus:outline-none">
+                        <button onclick="saveBudgetLimit()" class="px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 font-bold text-xs shrink-0">Saqlash</button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-800">
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="exportCSV()" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-center gap-1.5 transition">
+                        <i class="ph-bold ph-download-simple text-cyan-400"></i> CSV Yuklash
+                    </button>
+                    <button onclick="copySummaryReport()" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-center gap-1.5 transition">
+                        <i class="ph-bold ph-copy text-emerald-400"></i> Matn nusxalash
+                    </button>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="resetAllData()" class="w-full py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                        <i class="ph-bold ph-trash"></i> Barcha ma'lumotlarni tozalash (Noldan boshlash)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INSTALL APP GUIDE MODAL (iOS / Android / APK yo'riqnomasi) -->
+    <div id="install-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-5 border border-cyan-500/30 animate-item">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center text-slate-950 font-bold">
+                        <i class="ph-bold ph-device-mobile text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Telefonga ilova qilib o'rnatish</h3>
+                        <p class="text-[11px] text-slate-400">Internetsiz va to'liq ekranda ishlaydi</p>
+                    </div>
+                </div>
+                <button onclick="toggleInstallModal()" class="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <div class="p-3 rounded-2xl bg-slate-900/90 border border-slate-800">
+                    <p class="font-bold text-cyan-400 mb-1 flex items-center gap-1.5">
+                        <i class="ph-bold ph-android-logo text-base"></i> Android (Chrome):
+                    </p>
+                    <p class="text-slate-400 leading-relaxed">Brauzerning o'ng yuqori burchagidagi <b class="text-white">⋮ (uch nuqta)</b> tugmasini bosing va <b class="text-emerald-400">"Ilovani o'rnatish" (Install app)</b> yoki <b class="text-emerald-400">"Bosh ekranga qo'shish"</b> bandini tanlang.</p>
+                </div>
+
+                <div class="p-3 rounded-2xl bg-slate-900/90 border border-slate-800">
+                    <p class="font-bold text-cyan-400 mb-1 flex items-center gap-1.5">
+                        <i class="ph-bold ph-apple-logo text-base"></i> iPhone / iOS (Safari):
+                    </p>
+                    <p class="text-slate-400 leading-relaxed">Ekran pastidagi <b class="text-white">Ulashish (Share <i class="ph-bold ph-export"></i>)</b> tugmasini bosing va pastroq tushib <b class="text-emerald-400">"На экран «Домой»" (Add to Home Screen)</b> tugmasini bosing.</p>
+                </div>
+            </div>
+
+            <button onclick="toggleInstallModal()" class="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-bold text-sm">
+                Tushunarli
+            </button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // ==========================================
+        // 1. STATE & STORAGE MANAGEMENT
+        // ==========================================
+        const STORAGE_KEY = 'hamyon_ai_data_v1';
+
+        const CATEGORY_CONFIG = {
+            'Oziq-ovqat': { icon: 'ph-hamburger', color: '#f59e0b', bg: 'bg-amber-500/15', text: 'text-amber-400' },
+            'Transport':  { icon: 'ph-taxi', color: '#06b6d4', bg: 'bg-cyan-500/15', text: 'text-cyan-400' },
+            'Xaridlar':   { icon: 'ph-shopping-bag', color: '#a855f7', bg: 'bg-purple-500/15', text: 'text-purple-400' },
+            'Kommunal':   { icon: 'ph-lightning', color: '#3b82f6', bg: 'bg-blue-500/15', text: 'text-blue-400' },
+            'Salomatlik': { icon: 'ph-heartbeat', color: '#f43f5e', bg: 'bg-rose-500/15', text: 'text-rose-400' },
+            'Daromad':    { icon: 'ph-coins', color: '#10b981', bg: 'bg-emerald-500/15', text: 'text-emerald-400' },
+            'Qarz':       { icon: 'ph-handshake', color: '#22d3ee', bg: 'bg-cyan-500/15', text: 'text-cyan-400' },
+            'Boshqa':     { icon: 'ph-package', color: '#94a3b8', bg: 'bg-slate-500/15', text: 'text-slate-400' }
+        };
+
+        let appState = {
+            transactions: [],
+            debts: [],
+            monthlyLimit: 3000000,
+            currentFilter: 'all',
+            activeTab: 'transactions'
+        };
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    appState = { ...appState, ...JSON.parse(saved) };
+                } else {
+                    appState.transactions = [];
+                    appState.debts = [];
+                    appState.monthlyLimit = 3000000;
+                    saveState();
+                }
+            } catch (e) {
+                console.error("Storage yuklashda xatolik:", e);
+                appState.transactions = [];
+                appState.debts = [];
+                appState.monthlyLimit = 3000000;
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                showToast("Xotira to'ldi (rasmlar hajmi katta). Ba'zi rasmlarni o'chiring.", "warning");
+            }
+        }
+
+        // ==========================================
+        // IMAGE COMPRESSION & VIEWER HELPERS
+        // ==========================================
+        let pendingSmartImage = null;
+        let pendingManualImage = null;
+
+        function compressImageFile(file, maxWidth = 800, quality = 0.72) {
+            return new Promise((resolve, reject) => {
+                if (!file || !file.type.startsWith('image/')) {
+                    reject(new Error("Faqat rasm fayllari ruxsat etilgan"));
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        try {
+                            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                            resolve({
+                                dataUrl,
+                                name: file.name || 'rasm.jpg'
+                            });
+                        } catch (err) {
+                            resolve({
+                                dataUrl: ev.target.result,
+                                name: file.name || 'rasm.jpg'
+                            });
+                        }
+                    };
+                    img.onerror = () => reject(new Error("Rasmni o'qib bo'lmadi"));
+                    img.src = ev.target.result;
+                };
+                reader.onerror = () => reject(new Error("Faylni o'qishda xatolik"));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleSmartImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                pendingSmartImage = await compressImageFile(file);
+                document.getElementById('smart-image-thumb').src = pendingSmartImage.dataUrl;
+                document.getElementById('smart-image-name').textContent = pendingSmartImage.name;
+                document.getElementById('smart-image-preview').classList.remove('hidden');
+                showToast("Rasm biriktirildi!", "success");
+            } catch (err) {
+                showToast(err.message || "Rasm yuklashda xatolik", "error");
+            }
+            event.target.value = '';
+        }
+
+        function clearSmartImage() {
+            pendingSmartImage = null;
+            document.getElementById('smart-image-thumb').src = '';
+            document.getElementById('smart-image-name').textContent = '';
+            document.getElementById('smart-image-preview').classList.add('hidden');
+        }
+
+        async function handleManualImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                pendingManualImage = await compressImageFile(file);
+                document.getElementById('m-image-thumb').src = pendingManualImage.dataUrl;
+                document.getElementById('m-image-label').textContent = pendingManualImage.name;
+                document.getElementById('m-image-preview-box').classList.remove('hidden');
+                document.getElementById('m-image-preview-box').classList.add('flex');
+            } catch (err) {
+                showToast(err.message || "Rasm yuklashda xatolik", "error");
+            }
+            event.target.value = '';
+        }
+
+        function clearManualImage() {
+            pendingManualImage = null;
+            document.getElementById('m-image-thumb').src = '';
+            document.getElementById('m-image-label').textContent = 'Rasm tanlash';
+            document.getElementById('m-image-preview-box').classList.add('hidden');
+            document.getElementById('m-image-preview-box').classList.remove('flex');
+        }
+
+        function openImageViewer(src, title, subtitle = '') {
+            if (!src) return;
+            document.getElementById('viewer-img').src = src;
+            document.getElementById('viewer-title').textContent = title || 'Biriktirilgan rasm';
+            document.getElementById('viewer-subtitle').textContent = subtitle || '';
+            const modal = document.getElementById('image-viewer-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeImageViewer() {
+            const modal = document.getElementById('image-viewer-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // ==========================================
+        // 2. SMART UZBEK NLP PARSER
+        // ==========================================
+        function parseUzbekFinanceText(rawText) {
+            const text = rawText.trim();
+            if (!text) return null;
+
+            const lower = text.toLowerCase();
+
+            // 1. Extract amount (supports: 45000, 45 000, 45ming, 45 ming, 45k, 1.5 mln, 2 million)
+            let amount = 0;
+            let matchedAmountStr = '';
+
+            const amountRegex = /(\d+(?:[\s.,]\d{3})*(?:[.,]\d+)?)\s*(ming|min|k|к|mln|million|млн)?/i;
+            const match = lower.match(amountRegex);
+
+            if (match) {
+                matchedAmountStr = match[0];
+                let numStr = match[1].replace(/\s+/g, '');
+                if (/^\d{1,3}([.,]\d{3})+$/.test(numStr)) {
+                    numStr = numStr.replace(/[.,]/g, '');
+                } else {
+                    numStr = numStr.replace(',', '.');
+                }
+                let val = parseFloat(numStr);
+                const unit = (match[2] || '').toLowerCase();
+
+                if (unit === 'ming' || unit === 'min' || unit === 'k' || unit === 'к') {
+                    val *= 1000;
+                } else if (unit === 'mln' || unit === 'million' || unit === 'млн') {
+                    val *= 1000000;
+                } else if (val > 0 && val < 500) {
+                    val *= 1000;
+                }
+                amount = Math.round(val);
+            }
+
+            if (!amount || amount <= 0) return null;
+
+            // 2. Detect Type: Debt Given, Debt Taken, Income, Expense
+            let type = 'expense';
+            let person = '';
+
+            const isDebt = /(qarz|qariz|dolg|berib tur|olib tur)/i.test(lower);
+            const isGiven = /(berdim|berildi|oldi mendan|qarzga ber|berib turdim)/i.test(lower);
+            const isTaken = /(oldim|olindi|berdi menga|qarzga old|olib turdim)/i.test(lower);
+            const isIncome = /(oylik|oyligim|maosh|maoshim|daromad|kirim|tushdi|pul tush|stipendiya|avans|bonus|foyda|sotdim|mukofot|sovg'a|sovga)/i.test(lower);
+
+            if (isDebt || isGiven || isTaken) {
+                if (isTaken && !isGiven) {
+                    type = 'debt_taken';
+                } else {
+                    type = 'debt_given';
+                }
+
+                const words = text.replace(matchedAmountStr, '').trim().split(/\s+/);
+                const ignoreWords = ['qarz', 'qariz', 'dolg', 'berdim', 'oldim', 'berdi', 'oldi', 'menga', 'mendan', 'uchun', 'ga', 'dan', 'qa', 'ka'];
+                const nameCandidate = words.find(w => {
+                    const cleanW = w.toLowerCase().replace(/[^a-zа-яёўқғҳ']/gi, '');
+                    return cleanW.length >= 2 && !ignoreWords.includes(cleanW);
+                });
+
+                if (nameCandidate) {
+                    person = nameCandidate.replace(/(ga|qa|ka|dan|tan|ni|ning)$/i, '');
+                    person = person.charAt(0).toUpperCase() + person.slice(1);
+                } else {
+                    person = "Noma'lum shaxs";
+                }
+            } else if (isIncome) {
+                type = 'income';
+            }
+
+            // 3. Clean title & detect category
+            let cleanTitle = text.replace(matchedAmountStr, '').replace(/\s+/g, ' ').trim();
+            if (!cleanTitle) {
+                cleanTitle = type === 'income' ? 'Daromad' : (type.startsWith('debt') ? person : 'Xarajat');
+            } else {
+                cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+            }
+
+            let category = 'Boshqa';
+            if (type === 'income') {
+                category = 'Daromad';
+            } else if (type.startsWith('debt')) {
+                category = 'Qarz';
+            } else {
+                if (/(osh|tushlik|nonushta|kechki|ovqat|kafe|restoran|choy|kofe|non|suv|meva|go'sht|gosht|shashlik|lavash|burger|somsa|pitsa|pizza)/i.test(lower)) {
+                    category = 'Oziq-ovqat';
+                } else if (/(taksi|yandex|avtobus|metro|benzin|propan|metan|yo'l|yol|marshrut|mashina|zapravka)/i.test(lower)) {
+                    category = 'Transport';
+                } else if (/(korzinka|havas|makro|bozor|kiyim|krossovka|oyoq kiyim|do'kon|dokon|xarid|paket|texnika|telefon)/i.test(lower)) {
+                    category = 'Xaridlar';
+                } else if (/(svet|gaz|suv|internet|wifi|paynet|click|payme|telefon puli|kommunal|ijara|kvartira)/i.test(lower)) {
+                    category = 'Kommunal';
+                } else if (/(dori|apteka|dorixona|shifokor|vrach|klinika|tish|analiz|kasalxona)/i.test(lower)) {
+                    category = 'Salomatlik';
+                }
+            }
+
+            return {
+                type,
+                title: cleanTitle,
+                amount,
+                category,
+                person
+            };
+        }
+
+        // ==========================================
+        // 3. FORMATTING & UI RENDERING
+        // ==========================================
+        function formatMoney(num) {
+            return Math.round(Number(num) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        function formatRelativeDate(isoStr) {
+            const date = new Date(isoStr);
+            const now = new Date();
+            const diffDays = Math.floor((now.setHours(0,0,0,0) - new Date(date).setHours(0,0,0,0)) / 86400000);
+            const timeStr = date.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+
+            if (diffDays === 0) return `Bugun, ${timeStr}`;
+            if (diffDays === 1) return `Kecha, ${timeStr}`;
+            return `${date.toLocaleDateString('uz-UZ', { day: '2-digit', month: 'short' })}, ${timeStr}`;
+        }
+
+        function renderAll() {
+            renderSummary();
+            renderTransactions();
+            renderDebts();
+            renderAnalytics();
+        }
+
+        function renderSummary() {
+            const months = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
+            const now = new Date();
+            document.getElementById('current-month-badge').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
+
+            let pureIncome = 0;
+            let pureExpense = 0;
+            let netCashflow = 0;
+
+            appState.transactions.forEach(t => {
+                if (t.type === 'income') {
+                    netCashflow += t.amount;
+                    if (t.category !== 'Qarz') pureIncome += t.amount;
+                } else if (t.type === 'expense') {
+                    netCashflow -= t.amount;
+                    if (t.category !== 'Qarz') pureExpense += t.amount;
+                }
+            });
+
+            const balanceEl = document.getElementById('total-balance');
+            balanceEl.textContent = (netCashflow < 0 ? '-' : '') + formatMoney(Math.abs(netCashflow));
+            balanceEl.className = `text-3xl sm:text-4xl font-extrabold font-mono tracking-tight truncate ${netCashflow < 0 ? 'text-rose-400' : 'text-white'}`;
+
+            document.getElementById('total-income').textContent = `+${formatMoney(pureIncome)}`;
+            document.getElementById('total-expense').textContent = `-${formatMoney(pureExpense)}`;
+
+            let receivable = 0, recCount = 0;
+            let payable = 0, payCount = 0;
+
+            appState.debts.forEach(d => {
+                if (!d.settled) {
+                    if (d.type === 'given') {
+                        receivable += d.amount;
+                        recCount++;
+                    } else {
+                        payable += d.amount;
+                        payCount++;
+                    }
+                }
+            });
+
+            document.getElementById('debt-receivable').textContent = `${formatMoney(receivable)} so'm`;
+            document.getElementById('debt-receivable-count').textContent = `${recCount} ta faol qarz`;
+
+            document.getElementById('debt-payable').textContent = `${formatMoney(payable)} so'm`;
+            document.getElementById('debt-payable-count').textContent = `${payCount} ta faol qarz`;
+
+            const totalActiveDebts = recCount + payCount;
+            const badge = document.getElementById('debts-badge');
+            if (totalActiveDebts > 0) {
+                badge.textContent = totalActiveDebts;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderTransactions() {
+            const listEl = document.getElementById('transactions-list');
+            const filtered = appState.transactions.filter(t => {
+                if (appState.currentFilter === 'all') return true;
+                return t.type === appState.currentFilter;
+            });
+
+            document.getElementById('tx-count-label').textContent = `${filtered.length} ta yozuv`;
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="glass-card rounded-2xl p-8 text-center">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-800/80 text-slate-500 flex items-center justify-center mx-auto mb-3">
+                            <i class="ph ph-receipt text-2xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-slate-300">Hozircha yozuvlar yo'q</p>
+                        <p class="text-xs text-slate-500 mt-1">Yuqoridagi aqlli satrga xarajatingizni yozing</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(t => {
+                const cat = CATEGORY_CONFIG[t.category] || CATEGORY_CONFIG['Boshqa'];
+                const isInc = t.type === 'income';
+                const sign = isInc ? '+' : '-';
+                const amountColor = isInc ? 'text-emerald-400' : 'text-rose-400';
+                const safeTitle = escapeHtml(t.title).replace(/'/g, "&#39;");
+                const safeMeta = escapeHtml(`${t.category} • ${formatRelativeDate(t.date)}`).replace(/'/g, "&#39;");
+
+                return `
+                    <div class="glass-card rounded-2xl p-3.5 flex items-center justify-between gap-3 animate-item group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-11 h-11 rounded-2xl ${cat.bg} ${cat.text} flex items-center justify-center shrink-0">
+                                <i class="ph-bold ${cat.icon} text-xl"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-semibold text-white truncate">${escapeHtml(t.title)}</h4>
+                                <div class="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                                    <span class="px-1.5 py-0.2 rounded bg-slate-800 text-slate-300">${t.category}</span>
+                                    <span>•</span>
+                                    <span>${formatRelativeDate(t.date)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 shrink-0">
+                            ${t.image ? `
+                                <button onclick="openImageViewer('${t.image}', '${safeTitle}', '${safeMeta}')" title="Biriktirilgan rasmni ko'rish" class="w-9 h-9 rounded-xl overflow-hidden border border-cyan-500/40 hover:border-cyan-400 transition shrink-0">
+                                    <img src="${t.image}" alt="Rasm" class="w-full h-full object-cover">
+                                </button>
+                            ` : ''}
+                            <span class="text-sm font-bold font-mono ${amountColor}">${sign}${formatMoney(t.amount)}</span>
+                            <button onclick="deleteTransaction('${t.id}')" title="O'chirish" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition">
+                                <i class="ph ph-trash text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDebts() {
+            const listEl = document.getElementById('debts-list');
+
+            if (appState.debts.length === 0) {
+                listEl.innerHTML = `
+                    <div class="glass-card rounded-2xl p-8 text-center">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-800/80 text-slate-500 flex items-center justify-center mx-auto mb-3">
+                            <i class="ph ph-handshake text-2xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-slate-300">Qarzlar daftarchasi bo'sh</p>
+                        <p class="text-xs text-slate-500 mt-1">"Anvarga 50 ming qarz berdim" deb yozib sinab ko'ring</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const sorted = [...appState.debts].sort((a, b) => Number(a.settled) - Number(b.settled));
+
+            listEl.innerHTML = sorted.map(d => {
+                const isGiven = d.type === 'given';
+                const badgeClass = isGiven 
+                    ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' 
+                    : 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+                const typeLabel = isGiven ? 'Menga berishi kerak' : 'Men berishim kerak';
+                const amountColor = isGiven ? 'text-cyan-400' : 'text-amber-400';
+                const safeDebtTitle = escapeHtml(`${d.person} — ${d.note || 'Qarz'}`).replace(/'/g, "&#39;");
+                const safeDebtMeta = escapeHtml(`${typeLabel} • ${formatRelativeDate(d.date)}`).replace(/'/g, "&#39;");
+
+                return `
+                    <div class="glass-card rounded-2xl p-4 animate-item ${d.settled ? 'opacity-55' : ''}">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-2xl ${isGiven ? 'bg-cyan-500/20 text-cyan-400' : 'bg-amber-500/20 text-amber-400'} flex items-center justify-center font-bold text-base shrink-0">
+                                    ${escapeHtml(d.person.charAt(0).toUpperCase())}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="text-sm font-bold text-white ${d.settled ? 'line-through' : ''}">${escapeHtml(d.person)}</h4>
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeClass}">${typeLabel}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(d.note || 'Qarz yozuvi')} • ${formatRelativeDate(d.date)}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                ${d.image ? `
+                                    <button onclick="openImageViewer('${d.image}', '${safeDebtTitle}', '${safeDebtMeta}')" title="Rasmni ko'rish" class="w-9 h-9 rounded-xl overflow-hidden border border-cyan-500/40 hover:border-cyan-400 transition">
+                                        <img src="${d.image}" alt="Qarz rasmi" class="w-full h-full object-cover">
+                                    </button>
+                                ` : ''}
+                                <button onclick="deleteDebt('${d.id}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 transition">
+                                    <i class="ph ph-trash text-base"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                            <div>
+                                <span class="text-[11px] text-slate-500 block">Summa</span>
+                                <span class="text-base font-extrabold font-mono ${amountColor}">${formatMoney(d.amount)} so'm</span>
+                            </div>
+
+                            ${d.settled ? `
+                                <span class="px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center gap-1">
+                                    <i class="ph-bold ph-check-circle"></i> To'langan
+                                </span>
+                            ` : `
+                                <button onclick="settleDebt('${d.id}')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:opacity-95 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 transition active:scale-95">
+                                    <i class="ph-bold ph-check"></i> To'landi
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAnalytics() {
+            const totalsByCat = {};
+            let totalExpense = 0;
+
+            appState.transactions.forEach(t => {
+                if (t.type === 'expense') {
+                    totalsByCat[t.category] = (totalsByCat[t.category] || 0) + t.amount;
+                    totalExpense += t.amount;
+                }
+            });
+
+            const limit = appState.monthlyLimit || 3000000;
+            const pct = Math.min(100, Math.round((totalExpense / limit) * 100));
+
+            document.getElementById('limit-spent-text').textContent = `${formatMoney(totalExpense)} so'm (${pct}%)`;
+            document.getElementById('limit-total-text').textContent = `Limit: ${formatMoney(limit)}`;
+
+            const bar = document.getElementById('limit-progress-bar');
+            const warnMsg = document.getElementById('limit-warning-msg');
+            bar.style.width = `${pct}%`;
+
+            if (pct >= 90) {
+                bar.className = 'h-full rounded-full bg-gradient-to-r from-rose-500 to-amber-500 transition-all duration-500';
+                warnMsg.className = 'text-[11px] text-rose-400 mt-2 flex items-center gap-1 font-medium';
+                warnMsg.innerHTML = `<i class="ph-fill ph-warning-circle"></i> Diqqat! Oylik limit deyarli tugadi yoki oshib ketdi.`;
+            } else if (pct >= 70) {
+                bar.className = 'h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500';
+                warnMsg.className = 'text-[11px] text-amber-400 mt-2 flex items-center gap-1';
+                warnMsg.innerHTML = `<i class="ph-fill ph-warning"></i> Oylik limitning ${pct}% qismi ishlatildi.`;
+            } else {
+                bar.className = 'h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-500';
+                warnMsg.className = 'text-[11px] text-emerald-400 mt-2 flex items-center gap-1';
+                warnMsg.innerHTML = `<i class="ph-fill ph-check-circle"></i> Xarajatlar me'yorida ketmoqda.`;
+            }
+
+            document.getElementById('donut-total').textContent = formatMoney(totalExpense);
+            const svgEl = document.getElementById('donut-chart');
+            const barsEl = document.getElementById('category-bars');
+
+            const entries = Object.entries(totalsByCat).sort((a, b) => b[1] - a[1]);
+
+            if (entries.length === 0) {
+                svgEl.innerHTML = `<circle cx="50" cy="50" r="38" fill="transparent" stroke="#1e293b" stroke-width="12"></circle>`;
+                barsEl.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Tahlil uchun xarajatlar kiritilmagan</p>`;
+                return;
+            }
+
+            const radius = 38;
+            const circumference = 2 * Math.PI * radius;
+            let cumulativePercent = 0;
+
+            svgEl.innerHTML = entries.map(([catName, amount]) => {
+                const percent = amount / totalExpense;
+                const dashArray = `${percent * circumference} ${circumference}`;
+                const dashOffset = -cumulativePercent * circumference;
+                cumulativePercent += percent;
+                const color = (CATEGORY_CONFIG[catName] || CATEGORY_CONFIG['Boshqa']).color;
+
+                return `<circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="${color}" stroke-width="12" stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}" stroke-linecap="butt"></circle>`;
+            }).join('');
+
+            barsEl.innerHTML = entries.map(([catName, amount]) => {
+                const pctCat = Math.round((amount / totalExpense) * 100);
+                const cfg = CATEGORY_CONFIG[catName] || CATEGORY_CONFIG['Boshqa'];
+
+                return `
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="font-medium text-slate-200 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${cfg.color}"></span>
+                                ${catName}
+                            </span>
+                            <span class="font-mono text-slate-300">${formatMoney(amount)} <span class="text-slate-500">(${pctCat}%)</span></span>
+                        </div>
+                        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full" style="width: ${pctCat}%; background: ${cfg.color}"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // 4. ACTIONS & EVENT HANDLERS
+        // ==========================================
+        const smartInput = document.getElementById('smart-input');
+        const nlpPreview = document.getElementById('nlp-preview');
+        const nlpPreviewText = document.getElementById('nlp-preview-text');
+        const nlpPreviewBadge = document.getElementById('nlp-preview-badge');
+
+        smartInput.addEventListener('input', () => {
+            const parsed = parseUzbekFinanceText(smartInput.value);
+            if (parsed) {
+                nlpPreview.classList.remove('hidden');
+                const typeLabels = {
+                    expense: `💸 Xarajat (${parsed.category})`,
+                    income: `💰 Daromad`,
+                    debt_given: `🤝 Qarz berish (${parsed.person})`,
+                    debt_taken: `📥 Qarz olish (${parsed.person})`
+                };
+                nlpPreviewText.textContent = `${typeLabels[parsed.type]}: ${parsed.title}`;
+                nlpPreviewBadge.textContent = `${formatMoney(parsed.amount)} so'm`;
+            } else {
+                nlpPreview.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('smart-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const parsed = parseUzbekFinanceText(smartInput.value);
+            if (!parsed) {
+                showToast("Iltimos, summani ham kiriting (masalan: Tushlik 35000)", "warning");
+                return;
+            }
+
+            if (pendingSmartImage) {
+                parsed.image = pendingSmartImage.dataUrl;
+            }
+
+            addEntryFromParsed(parsed);
+            smartInput.value = '';
+            nlpPreview.classList.add('hidden');
+            clearSmartImage();
+        });
+
+        function addEntryFromParsed(parsed) {
+            const nowIso = new Date().toISOString();
+
+            if (parsed.type === 'debt_given' || parsed.type === 'debt_taken') {
+                const isGiven = parsed.type === 'debt_given';
+                appState.debts.unshift({
+                    id: 'd_' + Date.now(),
+                    type: isGiven ? 'given' : 'taken',
+                    person: parsed.person,
+                    amount: parsed.amount,
+                    note: parsed.title,
+                    image: parsed.image || null,
+                    settled: false,
+                    date: nowIso
+                });
+                appState.transactions.unshift({
+                    id: 't_' + Date.now(),
+                    type: isGiven ? 'expense' : 'income',
+                    title: isGiven ? `Qarz berildi: ${parsed.person}` : `Qarz olindi: ${parsed.person}`,
+                    amount: parsed.amount,
+                    category: 'Qarz',
+                    image: parsed.image || null,
+                    date: nowIso
+                });
+                showToast(`${parsed.person} bilan ${formatMoney(parsed.amount)} so'm qarz saqlandi!`, "success");
+                switchTab('debts');
+            } else {
+                appState.transactions.unshift({
+                    id: 't_' + Date.now(),
+                    type: parsed.type,
+                    title: parsed.title,
+                    amount: parsed.amount,
+                    category: parsed.category,
+                    image: parsed.image || null,
+                    date: nowIso
+                });
+                showToast(`${parsed.title} (${formatMoney(parsed.amount)} so'm) qo'shildi!`, "success");
+            }
+
+            saveState();
+            renderAll();
+        }
+
+        function applySample(text) {
+            smartInput.value = text;
+            smartInput.dispatchEvent(new Event('input'));
+            smartInput.focus();
+        }
+
+        function settleDebt(id) {
+            const debt = appState.debts.find(d => d.id === id);
+            if (!debt || debt.settled) return;
+
+            debt.settled = true;
+            const isGiven = debt.type === 'given';
+
+            appState.transactions.unshift({
+                id: 't_' + Date.now(),
+                type: isGiven ? 'income' : 'expense',
+                title: isGiven ? `Qarz qaytdi: ${debt.person}` : `Qarz qaytarildi: ${debt.person}`,
+                amount: debt.amount,
+                category: 'Qarz',
+                date: new Date().toISOString()
+            });
+
+            saveState();
+            renderAll();
+            showToast(`${debt.person} qarzi yopildi va balans yangilandi!`, "success");
+        }
+
+        function deleteTransaction(id) {
+            appState.transactions = appState.transactions.filter(t => t.id !== id);
+            saveState();
+            renderAll();
+            showToast("Yozuv o'chirildi", "info");
+        }
+
+        function deleteDebt(id) {
+            appState.debts = appState.debts.filter(d => d.id !== id);
+            saveState();
+            renderAll();
+            showToast("Qarz yozuvi o'chirildi", "info");
+        }
+
+        function switchTab(tabName) {
+            appState.activeTab = tabName;
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 relative';
+            });
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            activeBtn.className = 'tab-btn py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-slate-800 text-cyan-400 shadow relative';
+        }
+
+        function setTxFilter(filter) {
+            appState.currentFilter = filter;
+            document.querySelectorAll('.tx-filter').forEach(btn => {
+                btn.className = 'tx-filter px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white';
+            });
+            document.getElementById(`filter-${filter}`).className = 'tx-filter px-3 py-1 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30';
+            renderTransactions();
+        }
+
+        // ==========================================
+        // 5. VOICE RECOGNITION (WEB SPEECH API)
+        // ==========================================
+        function startVoiceRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const voiceBtn = document.getElementById('voice-btn');
+
+            if (!SpeechRecognition) {
+                showToast("Brauzeringiz ovozli kiritishni qo'llab-quvvatlamaydi", "warning");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'uz-UZ';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            voiceBtn.classList.add('mic-recording');
+            showToast("Gapiring... (Masalan: Tushlik 40 ming)", "info");
+
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                smartInput.value = transcript;
+                smartInput.dispatchEvent(new Event('input'));
+                voiceBtn.classList.remove('mic-recording');
+            };
+
+            recognition.onerror = () => {
+                voiceBtn.classList.remove('mic-recording');
+                showToast("Ovozni aniqlab bo'lmadi, qayta urinib ko'ring", "warning");
+            };
+
+            recognition.onend = () => {
+                voiceBtn.classList.remove('mic-recording');
+            };
+        }
+
+        // ==========================================
+        // 6. MODALS, EXPORT & HELPERS
+        // ==========================================
+        function toggleManualModal() {
+            const modal = document.getElementById('manual-modal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+
+        function toggleIncomeModal() {
+            const modal = document.getElementById('income-modal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+
+        function openIncomeModal() {
+            toggleIncomeModal();
+            setTimeout(() => {
+                const amtInput = document.getElementById('inc-amount');
+                if (amtInput) amtInput.focus();
+            }, 100);
+        }
+
+        function selectIncomePreset(label) {
+            document.getElementById('inc-title').value = label;
+            document.querySelectorAll('.income-preset').forEach(btn => {
+                btn.className = 'income-preset px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800/90 text-slate-300 border border-slate-700 hover:border-emerald-500/40 transition';
+            });
+            event.currentTarget.className = 'income-preset px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition';
+            document.getElementById('inc-amount').focus();
+        }
+
+        function parseFlexibleAmount(raw) {
+            const cleaned = String(raw).trim().toLowerCase();
+            const match = cleaned.match(/(\d+(?:[\s.,]\d{3})*(?:[.,]\d+)?)\s*(ming|min|k|к|mln|million|млн)?/i);
+            if (!match) return 0;
+            let numStr = match[1].replace(/\s+/g, '');
+            if (/^\d{1,3}([.,]\d{3})+$/.test(numStr)) {
+                numStr = numStr.replace(/[.,]/g, '');
+            } else {
+                numStr = numStr.replace(',', '.');
+            }
+            let val = parseFloat(numStr);
+            const unit = (match[2] || '').toLowerCase();
+            if (unit === 'ming' || unit === 'min' || unit === 'k' || unit === 'к') val *= 1000;
+            else if (unit === 'mln' || unit === 'million' || unit === 'млн') val *= 1000000;
+            return Math.round(val);
+        }
+
+        document.getElementById('income-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('inc-title').value.trim() || 'Daromad';
+            const amount = parseFlexibleAmount(document.getElementById('inc-amount').value);
+
+            if (!amount || amount <= 0) {
+                showToast("Iltimos, to'g'ri summa kiriting (masalan: 5000000 yoki 5 mln)", "warning");
+                return;
+            }
+
+            addEntryFromParsed({
+                type: 'income',
+                title,
+                amount,
+                category: 'Daromad',
+                person: ''
+            });
+
+            document.getElementById('inc-amount').value = '';
+            toggleIncomeModal();
+        });
+
+        function openManualDebtModal() {
+            toggleManualModal();
+            const debtRadio = document.querySelector('input[name="m-type"][value="debt_given"]');
+            if (debtRadio) {
+                debtRadio.checked = true;
+                updateManualFormFields();
+            }
+        }
+
+        function updateManualFormFields() {
+            const type = document.querySelector('input[name="m-type"]:checked').value;
+            const titleLabel = document.getElementById('m-title-label');
+            const titleInput = document.getElementById('m-title');
+            const catWrapper = document.getElementById('m-category-wrapper');
+
+            if (type.startsWith('debt')) {
+                titleLabel.textContent = "Kim bilan? (Ism)";
+                titleInput.placeholder = "Masalan: Anvar";
+                catWrapper.classList.add('hidden');
+            } else if (type === 'income') {
+                titleLabel.textContent = "Daromad manbai";
+                titleInput.placeholder = "Masalan: Oylik maosh";
+                catWrapper.classList.add('hidden');
+            } else {
+                titleLabel.textContent = "Nima uchun? (Izoh)";
+                titleInput.placeholder = "Masalan: Kechki ovqat";
+                catWrapper.classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('manual-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const type = document.querySelector('input[name="m-type"]:checked').value;
+            const title = document.getElementById('m-title').value.trim();
+            const amount = parseFloat(document.getElementById('m-amount').value);
+            const category = document.getElementById('m-category').value;
+
+            if (!title || isNaN(amount) || amount <= 0) return;
+
+            addEntryFromParsed({
+                type,
+                title,
+                amount,
+                category: type === 'income' ? 'Daromad' : category,
+                person: title,
+                image: pendingManualImage ? pendingManualImage.dataUrl : null
+            });
+
+            e.target.reset();
+            clearManualImage();
+            updateManualFormFields();
+            toggleManualModal();
+        });
+
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            document.getElementById('setting-budget-input').value = appState.monthlyLimit;
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+
+        function saveBudgetLimit() {
+            const val = parseFloat(document.getElementById('setting-budget-input').value);
+            if (val && val > 0) {
+                appState.monthlyLimit = val;
+                saveState();
+                renderAnalytics();
+                toggleSettingsModal();
+                showToast("Oylik limit yangilandi!", "success");
+            }
+        }
+
+        function resetAllData() {
+            appState.transactions = [];
+            appState.debts = [];
+            saveState();
+            renderAll();
+            toggleSettingsModal();
+            showToast("Barcha ma'lumotlar tozalandi!", "info");
+        }
+
+        function exportCSV() {
+            let csv = "Turi,Nomi,Kategoriya,Summa (so'm),Sana\n";
+            appState.transactions.forEach(t => {
+                const typeUz = t.type === 'income' ? 'Daromad' : 'Xarajat';
+                csv += `${typeUz},"${t.title.replace(/"/g, '""')}",${t.category},${t.amount},${new Date(t.date).toLocaleString('uz-UZ')}\n`;
+            });
+
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hamyon_ai_hisobot_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("CSV fayl yuklab olindi!", "success");
+        }
+
+        function copySummaryReport() {
+            let inc = 0, exp = 0;
+            appState.transactions.forEach(t => t.type === 'income' ? inc += t.amount : exp += t.amount);
+            const rec = appState.debts.filter(d => !d.settled && d.type === 'given').reduce((s, d) => s + d.amount, 0);
+            const pay = appState.debts.filter(d => !d.settled && d.type === 'taken').reduce((s, d) => s + d.amount, 0);
+
+            const report = `📊 HAMYON AI — MOLIYA HISOBOTI\n` +
+                `💰 Balans: ${formatMoney(inc - exp)} so'm\n` +
+                `📥 Kirim: +${formatMoney(inc)} so'm\n` +
+                `📤 Chiqim: -${formatMoney(exp)} so'm\n` +
+                `🤝 Menga qaytadigan qarzlar: ${formatMoney(rec)} so'm\n` +
+                `📌 Men berishim kerak: ${formatMoney(pay)} so'm`;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = report;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            showToast("Hisobot nusxalandi! Telegramga yuborishingiz mumkin.", "success");
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'border-emerald-500/40 bg-slate-900/95 text-emerald-300',
+                warning: 'border-amber-500/40 bg-slate-900/95 text-amber-300',
+                error:   'border-rose-500/40 bg-slate-900/95 text-rose-300',
+                info:    'border-cyan-500/40 bg-slate-900/95 text-cyan-300'
+            };
+
+            const icons = {
+                success: 'ph-check-circle',
+                warning: 'ph-warning',
+                error:   'ph-x-circle',
+                info:    'ph-info'
+            };
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl border backdrop-blur-md shadow-xl text-xs font-semibold flex items-center gap-2.5 animate-item ${colors[type]}`;
+            toast.innerHTML = `<i class="ph-fill ${icons[type]} text-base shrink-0"></i><span>${escapeHtml(message)}</span>`;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ==========================================
+        // 7. PWA (INSTALLABLE APP) & TELEGRAM MINI APP SETUP
+        // ==========================================
+        let deferredInstallPrompt = null;
+
+        function setupPWAAndTelegram() {
+            const appIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#10b981"/></linearGradient></defs><rect width="512" height="512" rx="120" fill="url(#g)"/><path d="M368 176H144c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32h224c17.7 0 32-14.3 32-32V208c0-17.7-14.3-32-32-32zm-16 112c-13.3 0-24-10.7-24-24s10.7-24 24-24 24 10.7 24 24-10.7 24-24 24z" fill="#090d16"/></svg>`;
+            const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(appIconSvg);
+
+            const appleIcon = document.createElement('link');
+            appleIcon.rel = 'apple-touch-icon';
+            appleIcon.href = iconUrl;
+            document.head.appendChild(appleIcon);
+
+            const manifestObj = {
+                name: "Hamyon AI — Qarz va Xarajatlar",
+                short_name: "Hamyon AI",
+                description: "Aqlli qarz va xarajatlar nazoratchisi",
+                start_url: window.location.href,
+                display: "standalone",
+                background_color: "#090d16",
+                theme_color: "#090d16",
+                orientation: "portrait",
+                icons: [
+                    { src: iconUrl, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+                    { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+                ]
+            };
+
+            try {
+                const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+                const manifestLink = document.createElement('link');
+                manifestLink.rel = 'manifest';
+                manifestLink.href = URL.createObjectURL(manifestBlob);
+                document.head.appendChild(manifestLink);
+            } catch (e) {
+                console.warn("Manifest yaratishda cheklov:", e);
+            }
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredInstallPrompt = e;
+            });
+
+            if (window.Telegram && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
+                tg.ready();
+                tg.expand();
+                if (tg.setHeaderColor) tg.setHeaderColor('#090d16');
+                if (tg.setBackgroundColor) tg.setBackgroundColor('#090d16');
+            }
+        }
+
+        function toggleInstallModal() {
+            const modal = document.getElementById('install-modal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+
+        async function triggerInstallApp() {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                const { outcome } = await deferredInstallPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast("Ilova telefoningizga o'rnatilmoqda!", "success");
+                }
+                deferredInstallPrompt = null;
+            } else {
+                toggleInstallModal();
+            }
+        }
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            setupPWAAndTelegram();
+            loadState();
+            renderAll();
+        });
+    </script>
+</body>
+</html>
